@@ -347,20 +347,20 @@
       
       /* 🎯 1. 핀터레스트 스타일(다단)로 롤백하되 세팅 최적화 */
       .memo-grid { 
-        display: block; /* Grid 해제 */
+        display: block; 
         column-count: 2;
+        /* 🔥 제가 이 줄을 빼먹어서 1열로 무너졌던 겁니다! 다시 추가! */
+        column-width: auto; 
         column-gap: 16px;
         padding: 16px 16px 180px; 
-        direction: rtl; /* 오른쪽 열부터 채우기 */
+        direction: rtl; 
       }
 
 /* 🎯 2. 카드에 잔상 방지 쉴드 치기 */
       .memo-card { 
-        direction: ltr; /* 글자는 왼쪽부터 */
+        direction: ltr; 
         width: 100%;
         margin-bottom: 16px;
-        
-        /* 🔥 이전의 잔상과 그림자 잘림을 완벽 차단하는 핵심 코드! */
         display: inline-block; 
         break-inside: avoid;
         page-break-inside: avoid;
@@ -369,7 +369,6 @@
 
       .compose-label h1 { font-size: 26px; }
       
-      /* 상하단바 잔상 방지 */
       .topbar, .compose-overlay {
         -webkit-backface-visibility: hidden; 
         backface-visibility: hidden;
