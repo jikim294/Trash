@@ -345,30 +345,24 @@
         font-size: 16px !important; 
       }
       
-      /* 🎯 1. 핀터레스트 스타일(다단)로 롤백하되 세팅 최적화 */
+     /* 🎯 1. 다단 버리고 가장 안정적인 1열(Flex) 세로 배열로 싹 교체 */
       .memo-grid { 
-        display: block; 
-        column-count: 2;
-        /* 🔥 제가 이 줄을 빼먹어서 1열로 무너졌던 겁니다! 다시 추가! */
-        column-width: auto; 
-        column-gap: 16px;
+        display: flex; 
+        flex-direction: column; 
         padding: 16px 16px 180px; 
-        direction: rtl; 
+        gap: 16px; /* 카드 위아래 간격 */
       }
 
-/* 🎯 2. 카드에 잔상 방지 쉴드 치기 */
+/* 🎯 2. 카드 설정 단순화 (화면 가로폭 꽉 채우기) */
       .memo-card { 
-        direction: ltr; 
         width: 100%;
-        margin-bottom: 16px;
-        display: inline-block; 
-        break-inside: avoid;
-        page-break-inside: avoid;
-        -webkit-column-break-inside: avoid;
+        margin-bottom: 0; /* gap으로 간격을 주므로 margin 삭제 */
+        /* 불필요한 다단 버그 방지 코드들 전부 삭제 */
       }
 
       .compose-label h1 { font-size: 26px; }
       
+      /* 상하단바 잔상 방지 (유지) */
       .topbar, .compose-overlay {
         -webkit-backface-visibility: hidden; 
         backface-visibility: hidden;
