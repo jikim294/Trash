@@ -345,27 +345,31 @@
         font-size: 16px !important; 
       }
       
-      /* 🎯 1. 다단(column)을 버리고 바둑판(Grid)으로 변경 */
+      /* 🎯 1. 핀터레스트 스타일(다단)로 롤백하되 세팅 최적화 */
       .memo-grid { 
-        display: grid;
-        grid-template-columns: 1fr 1fr; /* 정확히 5:5 반반 나누기 */
-        gap: 16px; /* 상하좌우 카드 사이 간격 */
+        display: block; /* Grid 해제 */
+        column-count: 2;
+        column-gap: 16px;
         padding: 16px 16px 180px; 
-        direction: rtl; /* 오른쪽에서 왼쪽으로 흐르게 방향 뒤집기 */
-        align-items: start; /* 카드가 제각각의 높이를 유지하도록 함 */
+        direction: rtl; /* 오른쪽 열부터 채우기 */
       }
 
-/* 🎯 2. 카드 설정 변경 (잔상 원인 제거) */
+/* 🎯 2. 카드에 잔상 방지 쉴드 치기 */
       .memo-card { 
-        direction: ltr; /* 글자는 다시 똑바로 읽도록 원상복구 */
-        margin-bottom: 0; /* Grid에서는 gap이 여백을 주므로 margin 삭제 (잔상 원인 1) */
-        break-inside: auto; /* 다단 버그 방지용 코드 삭제 (잔상 원인 2) */
+        direction: ltr; /* 글자는 왼쪽부터 */
         width: 100%;
+        margin-bottom: 16px;
+        
+        /* 🔥 이전의 잔상과 그림자 잘림을 완벽 차단하는 핵심 코드! */
+        display: inline-block; 
+        break-inside: avoid;
+        page-break-inside: avoid;
+        -webkit-column-break-inside: avoid;
       }
 
       .compose-label h1 { font-size: 26px; }
       
-      /* 상/하단바 잔상 방지 (기존 유지) */
+      /* 상하단바 잔상 방지 */
       .topbar, .compose-overlay {
         -webkit-backface-visibility: hidden; 
         backface-visibility: hidden;
