@@ -345,22 +345,31 @@
         font-size: 16px !important; 
       }
       
-      /* .memo-grid를 찾아 direction 속성을 추가하세요 */
-.memo-grid {
-  column-count: 2;
-  column-width: auto;
-  column-gap: 16px;
-  padding: 16px 16px 180px;
-  direction: rtl; /* 추가: 오른쪽에서 왼쪽으로 흐르게 설정 */
-}
+      /* 🎯 1. 다단(column)을 버리고 바둑판(Grid)으로 변경 */
+      .memo-grid { 
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* 정확히 5:5 반반 나누기 */
+        gap: 16px; /* 상하좌우 카드 사이 간격 */
+        padding: 16px 16px 180px; 
+        direction: rtl; /* 오른쪽에서 왼쪽으로 흐르게 방향 뒤집기 */
+        align-items: start; /* 카드가 제각각의 높이를 유지하도록 함 */
+      }
 
-/* .memo-card를 찾아 글자 방향을 다시 왼쪽으로 돌려주세요 */
-.memo-card {
-  ...
-  direction: ltr; /* 추가: 카드 안의 텍스트는 다시 왼쪽부터 읽도록 설정 */
-  text-align: left; /* 추가: 텍스트 왼쪽 정렬 유지 */
-}
+/* 🎯 2. 카드 설정 변경 (잔상 원인 제거) */
+      .memo-card { 
+        direction: ltr; /* 글자는 다시 똑바로 읽도록 원상복구 */
+        margin-bottom: 0; /* Grid에서는 gap이 여백을 주므로 margin 삭제 (잔상 원인 1) */
+        break-inside: auto; /* 다단 버그 방지용 코드 삭제 (잔상 원인 2) */
+        width: 100%;
+      }
+
       .compose-label h1 { font-size: 26px; }
+      
+      /* 상/하단바 잔상 방지 (기존 유지) */
+      .topbar, .compose-overlay {
+        -webkit-backface-visibility: hidden; 
+        backface-visibility: hidden;
+      }
     }
 /* ── MODAL (상세보기 팝업) ── */
     .modal-overlay {
