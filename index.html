@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>감쓰 노트</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f7f6f2;
+      --surface: #ffffff;
+      --border: rgba(0,0,0,0.08);
+      --border-hover: rgba(0,0,0,0.16);
+      --text-primary: #1a1917;
+      --text-secondary: #6b6863;
+      --text-tertiary: #a8a49e;
+      --accent: #1a1917;
+      --shadow-card: 0 2px 8px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04);
+      --shadow-card-hover: 0 8px 20px rgba(0,0,0,0.06), 0 16px 40px rgba(0,0,0,0.08);
+      
+      /* 포스터에서 추출한 3가지 네온 컬러 */
+      --color-1: #60f96b; /* 네온 그린 */
+      --color-2: #60e5f9; /* 네온 블루 */
+      --color-3: #9074fc; /* 네온 퍼플 */
+
+      --radius-input: 14px;
+      --font-body: 'Pretendard', -apple-system, sans-serif;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141412;
+        --surface: #1e1d1b;
+        --border: rgba(255,255,255,0.07);
+        --border-hover: rgba(255,255,255,0.14);
+        --text-primary: #eeece8;
+        --text-secondary: #8f8b84;
+        --text-tertiary: #5a5752;
+        --accent: #eeece8;
+        --shadow-card: 0 2px 8px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.2);
+        --shadow-card-hover: 0 8px 20px rgba(0,0,0,0.3), 0 16px 40px rgba(0,0,0,0.4);
+        
+        /* 다크모드에서도 네온 컬러 유지 */
+        --color-1: #60f96b;
+        --color-2: #60e5f9;
+        --color-3: #9074fc;
+      }
+    }
+
+    html::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.05;
+      mix-blend-mode: multiply;
+    }
+    @media (prefers-color-scheme: dark) {
+      html::before { opacity: 0.04; mix-blend-mode: screen; }
+    }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      background: rgba(var(--bg), 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.2px;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      max-width: 280px;
+      /* margin-left: auto; 를 지워주세요 */
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-tertiary);
+      fill: none;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+    }
+
+    .search-wrap input {
+      width: 100%;
+      padding: 7px 12px 7px 32px;
+      font-family: var(--font-body);
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      color: var(--text-primary);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-wrap input:focus { border-color: var(--border-hover); }
+
+    /* ── MAIN CANVAS ── */
+    .canvas {
+      min-height: 100vh;
+      padding: 80px 0 0;
+      position: relative;
+    }
+
+    .memo-grid {
+      column-width: 260px;
+      column-gap: 20px;
+      padding: 28px 40px 200px;
+    }
+
+    /* ── MEMO CARD ── */
+    .memo-card {
+      break-inside: avoid;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-card);
+      position: relative;
+      animation: bubbleUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+      transform-origin: center bottom;
+      /* 투명도(opacity)와 높이/여백이 변할 때도 부드럽게 움직이도록 속성 추가 */
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s, border-color 0.2s, opacity 0.15s ease, max-height 0.2s ease, padding 0.2s ease, margin 0.2s ease, border-width 0.2s ease;
+      cursor: grab;
+      
+      /* 고정된 크기 및 스타일 */
+      padding: 48px 20px 20px; /* 위쪽 여백을 24px -> 48px로 늘려 텍스트를 밑으로 내림 */
+      border-radius: 20px;
+      color: #1a1917; 
+    }
+
+    .memo-card:active { cursor: grabbing; }
+
+    .memo-card:hover {
+      box-shadow: var(--shadow-card-hover);
+      transform: translateY(-6px) scale(1.02);
+      border-color: var(--border-hover);
+      z-index: 10;
+    }
+
+    .memo-card.hidden { display: none; }
+    .memo-card.highlight { border-color: #1a1917; border-width: 2px; }
+
+    .bg-1 { background: var(--color-1); }
+    .bg-2 { background: var(--color-2); }
+    .bg-3 { background: var(--color-3); }
+
+    .memo-text {
+      font-size: 16px;
+      line-height: 1.6;
+      font-weight: 500;
+      white-space: pre-wrap; 
+      word-break: break-word; 
+      color: #1a1917; 
+    }
+
+    .memo-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.15);
+      padding-top: 12px;
+    }
+
+    .memo-time { font-size: 11px; color: rgba(0,0,0,0.6); font-weight: 500; }
+
+    .memo-del {
+      /* 1. 완벽한 1:1 정원형을 위해 크기 고정 및 flex 정중앙 정렬 */
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0; /* 기존 패딩 제거 */
+      
+      background: rgba(0,0,0,0.05);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      color: rgba(0,0,0,0.6);
+      
+      /* 2. 항상 보이도록 opacity를 1로 고정 */
+      opacity: 1; 
+      
+      transition: color 0.2s, transform 0.2s, background 0.2s;
+      position: absolute;
+      top: 12px; right: 12px;
+    }
+    
+    /* 3. 부모(카드)에 호버했을 때 나타나게 하던 코드는 삭제 (주석 처리 또는 완전히 지우시면 됩니다) */
+    /* .memo-card:hover .memo-del { opacity: 1; transform: scale(1); } */
+
+    /* 버튼 자체에 마우스를 올렸을 때의 애니메이션은 유지 */
+    .memo-del:hover { color: #1a1917; background: rgba(0,0,0,0.1); transform: scale(1.1) rotate(90deg); }
+
+    .memo-del svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+    /* ── KEYFRAMES ── */
+    @keyframes bubbleUp {
+      0% { opacity: 0; transform: translateY(80px) scale(0.6); }
+      50% { transform: translateY(-4px) scale(1.03); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* 1단계: 부드럽게 투명해지며 살짝 작아짐 */
+    .memo-card.evaporate {
+      opacity: 0 !important;
+      transform: scale(0.9) !important;
+      pointer-events: none;
+    }
+
+    /* 2단계: 투명해진 카드의 공간(높이와 여백)을 스르륵 접어서 없앰 */
+    .memo-card.collapse {
+      max-height: 0 !important;
+      margin-bottom: 0 !important;
+      padding-top: 0 !important;
+      padding-bottom: 0 !important;
+      border-width: 0 !important;
+      overflow: hidden !important;
+    }
+
+    /* ── COMPOSE ── */
+    .compose-overlay {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 50;
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      padding: 0 24px 32px;
+      transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .compose-overlay.centered { top: 0; align-items: center; padding-bottom: 0; }
+
+    .compose-box {
+      pointer-events: all;
+      width: 100%;
+      max-width: 560px;
+      background: rgba(var(--surface), 0.85);
+      backdrop-filter: blur(20px);
+      border: 1.5px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow-card-hover);
+      padding: 6px 6px 6px 20px;
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .compose-box:focus-within {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .compose-box textarea {
+      flex: 1;
+      resize: none;
+      border: none;
+      background: transparent;
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: var(--text-primary);
+      outline: none;
+      padding: 14px 0;
+      min-height: 50px;
+      max-height: 160px;
+      line-height: 1.6;
+    }
+
+    .compose-box textarea::placeholder { 
+      color: #cbcbcb; /* 원하는 색상 코드로 변경하세요 */ 
+      font-weight: 400; /* 글씨 굵기도 여기서 조절 가능합니다 */
+    }
+
+    .send-btn {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: var(--bg);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      margin-bottom: 4px;
+      margin-right: 8px;
+    }
+
+    .send-btn:hover { transform: scale(1.1) rotate(-10deg); }
+    .send-btn:active { transform: scale(0.9); }
+
+    .send-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .compose-label { text-align: center; margin-bottom: 24px; transition: opacity 0.4s; }
+    .compose-label.hidden { display: none; }
+    .compose-label h1 { font-family: var(--font-body); font-size: 32px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 8px; }
+    .compose-label p { font-size: 14px; color: var(--text-tertiary); font-weight: 400; }
+
+    @media (max-width: 640px) {
+      .memo-grid { 
+        column-count: 2;
+        column-width: auto;
+        
+        /* 1. 가운데(열 사이) 간격을 16px로 설정 */
+        column-gap: 16px; 
+        
+        /* 2. 화면 상단과 좌우 여백을 16px로 통일 (하단은 스크롤 여유를 위해 유지) */
+        padding: 16px 16px 180px; 
+      }
+
+      .memo-card {
+        /* 3. 카드 사이의 수직 간격도 16px로 맞춤 (기존 20px에서 변경) */
+        margin-bottom: 16px; 
+      }
+
+      .compose-label h1 { font-size: 26px; }
+    }
+/* ── MODAL (상세보기 팝업) ── */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(5px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+   .modal-content {
+      width: 90%;
+      max-width: 380px;
+      max-height: 75vh;
+      border-radius: 24px;
+      /* 상하좌우 모든 패딩을 24px로 통일하여 상단 마진을 좌우와 맞춥니다 */
+      padding: 24px; 
+      position: relative;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      transform: translateY(0) scale(1);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .modal-close {
+      position: absolute;
+      /* top 대신 bottom을 사용하여 우측 하단으로 배치합니다 */
+      bottom: 24px; 
+      right: 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: rgba(0,0,0,0.5);
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 700;
+      transition: color 0.2s;
+      z-index: 10; /* 날짜 텍스트보다 위에 오도록 설정 */
+    }
+    
+    .modal-text {
+      /* 버튼이 위에서 사라졌으므로 기존에 줬던 margin-top을 0으로 바꿉니다 */
+      margin-top: 0; 
+      font-size: 16px;
+      line-height: 1.6;
+      font-weight: 500;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #1a1917;
+      overflow-y: auto; 
+      flex: 1;
+      padding-right: 8px;
+      /* 하단 버튼과 날짜 영역을 위해 아래쪽에 여백을 둡니다 */
+      margin-bottom: 40px; 
+    }
+    
+    .modal-time {
+      margin-top: 0;
+      padding-top: 16px;
+      border-top: 1px solid rgba(0,0,0,0.15);
+      font-size: 13px;
+      color: rgba(0,0,0,0.5);
+      font-weight: 500;
+      text-align: left; /* 날짜는 왼쪽 하단 유지 */
+    }
+    /* ── 검색창 & 입력창 스크롤바 숨기기 ── */
+    .search-wrap input::-webkit-scrollbar,
+    .compose-box textarea::-webkit-scrollbar {
+      display: none; /* 크롬, 사파리, 엣지, 오페라에서 스크롤바 숨김 */
+    }
+
+    .search-wrap input,
+    .compose-box textarea {
+      -ms-overflow-style: none; /* IE 및 구버전 엣지 */
+      scrollbar-width: none; /* 파이어폭스 */
+    }
+    
+    /* ── 삭제 확인 모달 ── */
+    .confirm-content {
+      width: 90%;
+      max-width: 320px;
+      background: var(--surface); /* 라이트/다크모드 자동 대응 */
+      border-radius: 20px;
+      padding: 32px 24px 24px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+      text-align: center;
+      transform: translateY(0) scale(1);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .modal-overlay.hidden .confirm-content {
+      transform: translateY(20px) scale(0.95);
+    }
+    
+    .confirm-msg {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 28px;
+    }
+    
+    .confirm-btns {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .confirm-btns button {
+      flex: 1;
+      padding: 14px 0;
+      border-radius: 12px;
+      border: none;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s, background 0.2s;
+    }
+    
+    .confirm-btns button:active { transform: scale(0.95); }
+    
+   .confirm-btn-yes {
+      /* 글자색(밝음/어두움)을 배경으로 써서 배경과 완벽히 대비되게 만듦 */
+      background: var(--text-primary); 
+      /* 배경색을 글자색으로 써서 가독성을 높임 */
+      color: var(--surface); 
+    }
+    .confirm-btn-yes:hover { opacity: 0.85; }
+    
+    .confirm-btn-no {
+      /* 다크/라이트 모드에 맞춰 자동으로 변하는 은은한 테두리 색상 활용 */
+      background: var(--border); 
+      color: var(--text-primary);
+    }
+    .confirm-btn-no:hover { background: var(--border-hover); }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>
+      <input type="text" id="searchInput" placeholder="알맹이 검색..." autocomplete="off" />
+    </div>
+  </header>
+
+  <main class="canvas" id="canvas">
+    <div class="memo-grid" id="memoGrid"></div>
+  </main>
+
+  <div class="modal-overlay hidden" id="memoModal">
+    <div class="modal-content" id="modalCard">
+      <button class="modal-close" id="modalCloseBtn" aria-label="닫기">닫기</button>
+      <div class="modal-text" id="modalText"></div>
+      <div class="modal-time" id="modalTime"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="confirmModal">
+    <div class="confirm-content">
+      <p class="confirm-msg">이 감정 다 해소되셨나요?</p>
+      <div class="confirm-btns">
+        <button class="confirm-btn-yes" id="btnYes">네 해소됐어요</button>
+        <button class="confirm-btn-no" id="btnNo">아니요</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="compose-overlay centered" id="composeOverlay">
+    <div style="width:100%;max-width:560px;">
+      <div class="compose-label" id="composeLabel">
+        <h1>감쓰 노트</h1>
+     
+      </div>
+      <div class="compose-box">
+        <textarea id="textInput" rows="1" placeholder="무슨 생각이 드나요?"></textarea>
+        <button class="send-btn" id="sendBtn" aria-label="기록하기">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const textInput   = document.getElementById('textInput');
+    const sendBtn     = document.getElementById('sendBtn');
+    const memoGrid    = document.getElementById('memoGrid');
+    const searchInput = document.getElementById('searchInput');
+    const overlay     = document.getElementById('composeOverlay');
+    const composeLabel = document.getElementById('composeLabel');
+
+    let memos = loadMemos();
+
+    memos.forEach(m => renderCard(m, false));
+    updateUI();
+
+    function loadMemos() {
+      try { return JSON.parse(localStorage.getItem('almaengi-memos') || '[]'); }
+      catch { return []; }
+    }
+
+    function saveMemos() {
+      try { localStorage.setItem('almaengi-memos', JSON.stringify(memos)); }
+      catch {}
+    }
+
+    function formatTime(dateStr) {
+      const diff = new Date() - new Date(dateStr);
+      
+      // 1분 미만은 '방금'
+      if (diff < 60000) return '방금';
+      
+      // 60분(1시간) 미만은 'n분 전'
+      if (diff < 3600000) return Math.floor(diff / 60000) + '분 전';
+      
+      // 그 이상(60분부터)은 전부 'YY.MM.DD' 포맷으로 표시
+      const date = new Date(dateStr);
+      const yy = String(date.getFullYear()).slice(-2);
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      
+      return `${yy}.${mm}.${dd}`;
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function renderCard(memo, prepend) {
+      const card = document.createElement('div');
+      const colorClass = `bg-${memo.colorNum || ((memo.id % 3) + 1)}`; 
+      
+      card.className = `memo-card ${colorClass}`;
+      card.dataset.id = memo.id;
+      card.dataset.text = memo.text.toLowerCase();
+      
+      // 🎯 200자 이상일 경우 텍스트 자르기 및 ... 추가
+      let displayText = memo.text;
+      if (displayText.length > 200) {
+        displayText = displayText.substring(0, 200) + '...';
+      }
+      
+      // 카드 렌더링 (삭제 버튼 클릭 시 모달이 안 뜨도록 event.stopPropagation() 추가)
+      card.innerHTML = `
+        <button class="memo-del" aria-label="삭제" onclick="event.stopPropagation(); deleteCard(${memo.id})">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="memo-text">${escHtml(displayText)}</div>
+        <div class="memo-footer">
+          <span class="memo-time">${formatTime(memo.date)}</span>
+        </div>
+      `;
+      
+      // 🎯 카드를 클릭하면 원본 텍스트 전체를 담아 모달 띄우기
+      card.addEventListener('click', () => openModal(memo, colorClass));
+      
+      if (prepend && memoGrid.firstChild) memoGrid.insertBefore(card, memoGrid.firstChild);
+      else memoGrid.appendChild(card);
+    }
+
+    // 🎯 여기서부터 모달 컨트롤 로직 추가
+    const memoModal = document.getElementById('memoModal');
+    const modalCard = document.getElementById('modalCard');
+    const modalText = document.getElementById('modalText');
+    const modalTime = document.getElementById('modalTime');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+   // 🎯 2. 기존 openModal 함수를 찾아서 시간을 입력하는 부분을 수정
+    function openModal(memo, colorClass) {
+      modalText.innerHTML = escHtml(memo.text); 
+      
+      // 기존 formatTime 대신 새로 만든 formatModalTime 적용
+      modalTime.textContent = formatModalTime(memo.date);
+      
+      modalCard.className = `modal-content ${colorClass}`; 
+      
+      memoModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden'; 
+    }
+
+    function closeModal() {
+      memoModal.classList.add('hidden');
+      document.body.style.overflow = ''; // 스크롤 다시 원상복구
+    }
+
+    modalCloseBtn.addEventListener('click', closeModal);
+    memoModal.addEventListener('click', (e) => {
+      // 반투명한 검은 배경(오버레이)을 클릭했을 때도 모달 닫히게 설정
+      if (e.target === memoModal) closeModal(); 
+    });
+
+   function submit() {
+      const text = textInput.value.trim();
+      if (!text) return;
+      
+      // 컬러 순서 부여
+      const nextColorNum = (memos.length % 3) + 1;
+      const memo = { id: Date.now(), text, date: new Date().toISOString(), colorNum: nextColorNum };
+      
+      // 1. 최신 메모가 다시 맨 위에 쌓이도록 push 대신 unshift 사용
+      memos.unshift(memo);
+      saveMemos();
+      
+      // 2. 카드를 화면 맨 앞에 그리도록 두 번째 값을 true로 전달
+      renderCard(memo, true);
+      
+      textInput.value = '';
+      textInput.style.height = 'auto';
+      searchInput.value = '';
+      filterCards('');
+      updateUI();
+
+      // 3. 메모 추가하는 순간 화면을 맨 위로 부드럽게 끌어올림
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // 🎯 지우려고 선택한 메모의 ID를 임시로 기억해둘 변수
+    let memoToDelete = null;
+
+    const confirmModal = document.getElementById('confirmModal');
+    const btnYes = document.getElementById('btnYes');
+    const btnNo = document.getElementById('btnNo');
+
+    // 1. 카드의 X 버튼을 눌렀을 때 (바로 안 지우고 모달 띄우기)
+    function deleteCard(id) {
+      memoToDelete = id; // 지울 메모의 ID를 기억해둠
+      confirmModal.classList.remove('hidden');
+    }
+    window.deleteCard = deleteCard;
+
+   // 2. '네 해소됐어요' 버튼 클릭 시 (부드러운 삭제 진행)
+    btnYes.addEventListener('click', () => {
+      if (memoToDelete !== null) {
+        const card = memoGrid.querySelector(`[data-id="${memoToDelete}"]`);
+        if (card) {
+          // 자연스럽게 접히기 위해 현재 카드의 실제 높이를 max-height로 픽스해둠
+          card.style.maxHeight = card.scrollHeight + 'px';
+          
+          // 1단계: 스르륵 투명해지면서 페이드 아웃 (0.3초 소요)
+          card.classList.add('evaporate'); 
+          
+          // 2단계: 투명해진 후 공간을 위로 스르륵 접기 시작
+          setTimeout(() => {
+            card.classList.add('collapse');
+          }, 300);
+
+          // 3단계: 공간이 다 접히고 나면(총 0.7초 후) 화면(DOM)과 데이터에서 완전히 제거
+          setTimeout(() => {
+            memos = memos.filter(m => m.id !== memoToDelete);
+            saveMemos();
+            card.remove(); 
+            updateUI(); 
+            memoToDelete = null; // 기억 지우기
+          }, 700);
+        }
+      }
+      confirmModal.classList.add('hidden'); // 확인 모달 닫기
+    });
+
+    // 3. '아니요' 버튼 클릭 시 (삭제 취소)
+    btnNo.addEventListener('click', () => {
+      memoToDelete = null; // 기억 지우기 (아무 일도 안 일어남)
+      confirmModal.classList.add('hidden');
+    });
+
+    // 4. 모달 밖(어두운 배경) 클릭 시 (삭제 취소)
+    confirmModal.addEventListener('click', (e) => {
+      if (e.target === confirmModal) {
+        memoToDelete = null;
+        confirmModal.classList.add('hidden');
+      }
+    });
+
+    window.deleteCard = deleteCard;
+
+    function updateUI() {
+      if (memos.length === 0) {
+        overlay.classList.add('centered');
+        composeLabel.classList.remove('hidden');
+      } else {
+        overlay.classList.remove('centered');
+        composeLabel.classList.add('hidden');
+      }
+    }
+
+    function filterCards(q) {
+      const query = q.trim().toLowerCase();
+      memoGrid.querySelectorAll('.memo-card').forEach(card => {
+        const match = !query || card.dataset.text.includes(query);
+        card.classList.toggle('hidden', !match);
+        card.classList.toggle('highlight', !!query && match);
+      });
+    }
+
+    sendBtn.addEventListener('click', submit);
+
+    textInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
+    });
+
+    textInput.addEventListener('input', () => {
+      textInput.style.height = 'auto';
+      textInput.style.height = Math.min(textInput.scrollHeight, 160) + 'px';
+    });
+
+    searchInput.addEventListener('input', e => filterCards(e.target.value));
+
+    setInterval(() => {
+      memoGrid.querySelectorAll('.memo-card').forEach(card => {
+        const id = parseInt(card.dataset.id);
+        const memo = memos.find(m => m.id === id);
+        if (memo) {
+          const timeEl = card.querySelector('.memo-time');
+          if (timeEl) timeEl.textContent = formatTime(memo.date);
+        }
+      });
+    }, 60000);
+    
+    // 🎯 1. 모달 전용 YY.MM.DD 포맷 함수 추가 (script 어디든 빈 곳에 추가해 주세요)
+    function formatModalTime(dateStr) {
+      const date = new Date(dateStr);
+      const yy = String(date.getFullYear()).slice(-2);
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yy}.${mm}.${dd}`; 
+    }
+  </script>
+</body>
+</html>
