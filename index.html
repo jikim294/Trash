@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>감쓰 노트</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -11,7 +11,8 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #f7f6f2;
+  --bg: #f7f6f2;
+  --bg-rgb: 247, 246, 242; /* 추가: 라이트모드 배경 RGB */
       --surface: #ffffff;
       --border: rgba(0,0,0,0.08);
       --border-hover: rgba(0,0,0,0.16);
@@ -32,8 +33,9 @@
     }
 
     @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #141412;
+  :root {
+    --bg: #141412;
+    --bg-rgb: 20, 20, 18; /* 추가: 다크모드 배경 RGB */
         --surface: #1e1d1b;
         --border: rgba(255,255,255,0.07);
         --border-hover: rgba(255,255,255,0.14);
@@ -51,22 +53,15 @@
       }
     }
 
-    html::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none;
-      z-index: 9999;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      opacity: 0.05;
-      mix-blend-mode: multiply;
-    }
+    
     @media (prefers-color-scheme: dark) {
       html::before { opacity: 0.04; mix-blend-mode: screen; }
     }
 
-    html, body {
+   html, body {
       height: 100%;
+      width: 100%; /* 추가 */
+      overflow-x: hidden; /* 추가: 화면이 양옆으로 밀리는 현상 완벽 차단 */
       font-family: var(--font-body);
       background: var(--bg);
       color: var(--text-primary);
@@ -77,16 +72,21 @@
     .topbar {
       position: fixed;
       top: 0; left: 0; right: 0;
-      z-index: 100;
+      /* z-index를 노이즈 레이어(9999)보다 높게 올려 잔상과 겹침 방지 */
+      z-index: 100000; 
+      /* 모바일 브라우저의 렌더링 오류(잔상)를 막아주는 마법의 코드 */
+      transform: translateZ(0); 
+      -webkit-transform: translateZ(0);
+      
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 14px 24px;
-      background: rgba(var(--bg), 0.8);
+      background: rgba(var(--bg-rgb), 0.8); /* var(--bg) 대신 var(--bg-rgb) 사용 */
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px); /* 사파리 호환성 추가 */
       border-bottom: 1px solid var(--border);
     }
-
     .brand {
       font-family: var(--font-body);
       font-size: 15px;
@@ -257,7 +257,10 @@
     .compose-overlay {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      z-index: 50;
+      z-index: 100000; /* 상단바처럼 최상위로 고정 */
+      transform: translateZ(0); /* 모바일 잔상/떨림 방지 */
+      -webkit-transform: translateZ(0);
+      background: rgba(var(--bg-rgb), 0.8); /* var(--bg) 대신 var(--bg-rgb) 사용 */
       pointer-events: none;
       display: flex;
       justify-content: center;
@@ -336,23 +339,34 @@
     .compose-label p { font-size: 14px; color: var(--text-tertiary); font-weight: 400; }
 
     @media (max-width: 640px) {
+      /* 모바일에서는 입력창 폰트를 무조건 16px 이상으로 해야 자동 확대(줌인)가 안 일어납니다! */
+      .search-wrap input,
+      .compose-box textarea {
+        font-size: 16px !important; 
+      }
+      
+     /* 🎯 1. 다단 버리고 가장 안정적인 1열(Flex) 세로 배열로 싹 교체 */
       .memo-grid { 
-        column-count: 2;
-        column-width: auto;
-        
-        /* 1. 가운데(열 사이) 간격을 16px로 설정 */
-        column-gap: 16px; 
-        
-        /* 2. 화면 상단과 좌우 여백을 16px로 통일 (하단은 스크롤 여유를 위해 유지) */
+        display: flex; 
+        flex-direction: column; 
         padding: 16px 16px 180px; 
+        gap: 16px; /* 카드 위아래 간격 */
       }
 
-      .memo-card {
-        /* 3. 카드 사이의 수직 간격도 16px로 맞춤 (기존 20px에서 변경) */
-        margin-bottom: 16px; 
+/* 🎯 2. 카드 설정 단순화 (화면 가로폭 꽉 채우기) */
+      .memo-card { 
+        width: 100%;
+        margin-bottom: 0; /* gap으로 간격을 주므로 margin 삭제 */
+        /* 불필요한 다단 버그 방지 코드들 전부 삭제 */
       }
 
       .compose-label h1 { font-size: 26px; }
+      
+      /* 상하단바 잔상 방지 (유지) */
+      .topbar, .compose-overlay {
+        -webkit-backface-visibility: hidden; 
+        backface-visibility: hidden;
+      }
     }
 /* ── MODAL (상세보기 팝업) ── */
     .modal-overlay {
